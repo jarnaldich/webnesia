@@ -6,7 +6,9 @@
 	<script type="text/javascript" charset="utf-8" src="js/jquery-1.4.3.min.js"></script>
 	<script type="text/javascript" charset="utf-8" src="js/jquery.tmpl.min.js"></script>
 	<script type="text/javascript" charset="utf-8" src="js/json2.js"></script>
-	<script type="text/javascript" charset="utf-8" src="js/webnesia.js"></script>
+	<script type="text/javascript" charset="utf-8"
+	src="js/webnesia.js"></script>
+	<script type="text/javascript" charset="utf-8" src="https://raw.github.com/rustyio/BERT-JS/master/bert.js"></script>        
     <script id="tables_tmpl" type="text/x-jquery-tmpl">
         <tr>
             <td><a href="table.html?${$item.data}">${$item.data}</a></td>
@@ -15,6 +17,7 @@
     <script type="text/javascript" charset="utf-8">    
         $(document).ready(function() {
             $.get('/_all_tables', function(data) {
+                data = Bert.decode(data);
                 $('#tables_tmpl').tmpl(data).appendTo('#table_body');
             });
             $("#create_test_table").click(function () { create_test_table(); });
