@@ -3,23 +3,40 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-	<script type="text/javascript" charset="utf-8" src="js/jquery-1.4.3.min.js"></script>
+	<script type="text/javascript" charset="utf-8"
+	        src="http://blog.vjeux.com/wp-content/uploads/2011/01/jquery-1.4.4-binary-ajax.js">
+        </script>
+	<script type="text/javascript" charset="utf-8"
+	        src="https://raw.github.com/vjeux/jsDataView/master/src/jdataview.js">
+        </script>
 	<script type="text/javascript" charset="utf-8" src="js/jquery.tmpl.min.js"></script>
-	<script type="text/javascript" charset="utf-8" src="js/json2.js"></script>
+	<script type="text/javascript" charset="utf-8"
+	src="js/json2.js"></script>
+	<script type="text/javascript" charset="utf-8" src="https://raw.github.com/rustyio/BERT-JS/master/bert.js"></script>        
 	<script type="text/javascript" charset="utf-8"
 	src="js/webnesia.js"></script>
-	<script type="text/javascript" charset="utf-8" src="https://raw.github.com/rustyio/BERT-JS/master/bert.js"></script>        
+
     <script id="tables_tmpl" type="text/x-jquery-tmpl">
         <tr>
             <td><a href="table.html?${$item.data}">${$item.data}</a></td>
         </tr>
     </script>
     <script type="text/javascript" charset="utf-8">    
-        $(document).ready(function() {
-            $.get('/_all_tables', function(data) {
-                data = Bert.decode(data);
-                $('#tables_tmpl').tmpl(data).appendTo('#table_body');
-            });
+      $(document).ready(function() {
+      $.ajax({ url: '/_all_tables',
+               type: "GET",
+      dataType: 'binary',
+               async: false,
+
+               success: function(bert) {
+                        var view = new jDataView(bert);
+                        console.log(view);
+                        console.log(view.getUint8(0, true));
+                        console.log(view.getString(view.length, 0).charCodeAt(0));
+                        var data = Bert.decode(bert.toString());
+
+                        $('#tables_tmpl').tmpl(data).appendTo('#table_body');
+               }});
             $("#create_test_table").click(function () { create_test_table(); });
             $("#delete_test_table").click(function () { delete_test_table(); });
         });

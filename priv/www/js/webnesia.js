@@ -41,13 +41,17 @@ function render_record()
 }
 
 function create_test_table () {
-    $.ajax({url: "/test", type: "PUT", async: false, data: JSON.stringify(["id", "timestamp", "test_field"]), success: function (data) {
-        if (data == "ok") {
-            for (var i = 1; i <= 500 ; i++) {
-                $.ajax({url: "/test", type: "POST", async: false, data: JSON.stringify({"id": i, "test_field_1": new Date().getTime(), "test_field": "the brown fox jumps over the lazy dog"})});
-            }
-            location.reload();
+    $.ajax({url: "/test", 
+            type: "PUT", async: false,
+            dataType: "binary",
+            data: Bert.encode(["id", "timestamp", "test_field"]), success: function (data) {
+      data = Bert.decode(data);
+      if (data == "ok") {
+        for (var i = 1; i <= 500 ; i++) {
+          $.ajax({url: "/test", type: "POST", async: false, data: JSON.stringify({"id": i, "test_field_1": new Date().getTime(), "test_field": "the brown fox jumps over the lazy dog"})});
         }
+        location.reload();
+      }
     }});
 }
 

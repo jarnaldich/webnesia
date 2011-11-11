@@ -23,7 +23,10 @@ encode (Data) ->
 %% @end
 %%--------------------------------------------------------------------
 encode_records (Records, Size, Limit, Offset) ->
-    encode({struct, [{total_rows, Size}, {number_of_rows, length(Records)}, {limit, Limit}, {offset, Offset}, {rows, records_to_structs(Records)}]}).
+    encode({struct, [{total_rows, Size}, 
+                     {number_of_rows, length(Records)}, 
+                     {limit, Limit}, 
+                     {offset, Offset}, {rows, records_to_structs(Records)}]}).
 
 %--------------------------------------------------------------------
 %% @doc
