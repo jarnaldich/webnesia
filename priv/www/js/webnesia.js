@@ -1,26 +1,59 @@
 var activity = false;
 
+
+function decode_bert(bert) {
+  var view = new jDataView(bert);
+  var bytes = new Array(view.length);
+  
+  for(var i = 0; i < view.length; i++)
+    bytes[i] = view.getUint8(i);
+  
+  return Bert.decode(Bert.bytes_to_string(bytes));
+}
+
+function decode_bert_dict(bert)
+{
+  tableInfo = {};
+  decode_bert(bert)[0][2].forEach(function(x) {
+    tableInfo[x[0][0].value] = x[0][1];
+  });
+  return tableInfo;
+}
+
 function render_table(limit, offset)
 {
-    activity = true;
-    show_activity();
-    var table = window.location.href.slice(window.location.href.indexOf("?") + 1);
-    $.get("/" + table, function(tableInfo) {
-        $("#table_caption").html($("#table_caption_tmpl").tmpl(tableInfo.table_name));
-        $("#table_header").html($("#table_header_tmpl").tmpl(tableInfo.attributes));
-        $.get("/" + table + "/_all_records?limit=" + limit + "&skip=" + offset, function(data) {
+  activity = true;
+  show_activity();
+  var table = window.location.href.slice(window.location.href.indexOf("?") + 1);
+  $.get("/" + table, function(bert) {
+    tableInfo = decode_bert_dict(bert);
+    $("#table_caption").html($("#table_caption_tmpl").tmpl(tableInfo.table_name));
+    $("#table_header").html($("#table_header_tmpl").tmpl(tableInfo.attributes));
+    $.get("/" + table + "/_all_records?limit=" + limit + "&skip=" + offset, 
+          function(bert2) {
+            data = decode_bert_dict(bert2);
             data.number_of_attributes = tableInfo.number_of_attributes;
+            var new_rows = data.rows.map(function(x) {
+              var r = {}; x[0][2].forEach(function(h) { r[h[0][0]] = h[0][1].toString() });
+              return r;//decode_bert_dict(x)
+            });
+
+            data.rows = new_rows
+            console.log(data);
+            
             $("#table_footer").html($("#table_footer_tmpl").tmpl(data));
             data = data.rows;
             for (key in data) {
-                data[key].keys = tableInfo.attributes;
-                data[key].table = table;
+              data[key].keys = tableInfo.attributes;
+              data[key].table = table;
             }
+            console.log(data);            
             $("#table_body").html($("#table_body_tmpl").tmpl(data));
             activity = false;
-            hide_activity();
-        });
-    });
+            hide_activity();},
+          'binary');
+  }, 
+        'binary');
 }
 
 function render_record()
@@ -45,10 +78,16 @@ function create_test_table () {
             type: "PUT", async: false,
             dataType: "binary",
             data: Bert.encode(["id", "timestamp", "test_field"]), success: function (data) {
-      data = Bert.decode(data);
+      data = decode_bert(data);
       if (data == "ok") {
-        for (var i = 1; i <= 500 ; i++) {
-          $.ajax({url: "/test", type: "POST", async: false, data: JSON.stringify({"id": i, "test_field_1": new Date().getTime(), "test_field": "the brown fox jumps over the lazy dog"})});
+        for (var i = 1; i <= 2 ; i++) {
+          $.ajax({url: "/test", 
+                  type: "POST", 
+                  dataType: 'binary',
+                  async: false, 
+                  data: Bert.encode({id: i, 
+                                     timestamp: i, 
+                                     test_field: Bert.binary("the brown fox jumps over the lazy dog")})});
         }
         location.reload();
       }

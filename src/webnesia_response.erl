@@ -23,10 +23,11 @@ encode (Data) ->
 %% @end
 %%--------------------------------------------------------------------
 encode_records (Records, Size, Limit, Offset) ->
-    encode({struct, [{total_rows, Size}, 
-                     {number_of_rows, length(Records)}, 
-                     {limit, Limit}, 
-                     {offset, Offset}, {rows, records_to_structs(Records)}]}).
+    encode({bert, dict, [{total_rows, Size}, 
+                         {number_of_rows, length(Records)}, 
+                         {limit, Limit}, 
+                         {offset, Offset}, 
+                         {rows, records_to_structs(Records)}]}).
 
 %--------------------------------------------------------------------
 %% @doc
@@ -46,5 +47,5 @@ records_to_structs ([]) ->
 records_to_structs ([Record | Tail]) ->
     [Table | Values] = tuple_to_list(Record),
     Attributes = mnesia:table_info(Table, attributes),
-    lists:merge(fun(_, _) -> true end, [{struct, lists:zip(Attributes, Values)}], records_to_structs(Tail)).
+    lists:merge(fun(_, _) -> true end, [{bert, dict, lists:zip(Attributes, Values)}], records_to_structs(Tail)).
 

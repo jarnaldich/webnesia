@@ -26,9 +26,11 @@ loop(Req, DocRoot) ->
         Method when Method =:= 'GET'; Method =:= 'HEAD' ->
             case Path of
                 "db/_start" ->
-                    Req:respond({200, [{"Content-type", "application/json"}], webnesia_db:start()});
+                    Req:respond({200, [{"Content-type", "application/json"}], 
+                                 webnesia_db:start()});
                 "_all_tables" ->
-                    Req:respond({200, [{"Content-type", "application/json"}], webnesia_db:tables()});
+                    Req:respond({200, [{"Content-type", "application/json"}], 
+                                 webnesia_db:tables()});
                 "_utils/" ++ File ->
                     Req:serve_file(File, DocRoot);
                 "favicon.ico" ->

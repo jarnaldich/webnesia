@@ -35,13 +35,12 @@ start () ->
 %% @end
 %%--------------------------------------------------------------------
 info (Table) ->
-
-    webnesia_response:encode({struct, [
-                                {table_name, list_to_atom(Table)},
-                                {attributes, mnesia:table_info(list_to_atom(Table), attributes)},
-                                {number_of_attributes, mnesia:table_info(list_to_atom(Table), arity) - 1},
-                                {size, mnesia:table_info(list_to_atom(Table), size)}
-                               ]}).
+    T = list_to_atom(Table),
+    webnesia_response:encode({bert, dict,
+                              [{table_name, Table},
+                               {attributes, mnesia:table_info(T, attributes)},
+                               {number_of_attributes, mnesia:table_info(T, arity) - 1},
+                               {size, mnesia:table_info(T, size)}]}).
 
 %--------------------------------------------------------------------
 %% @doc
@@ -49,7 +48,6 @@ info (Table) ->
 %% @end
 %%--------------------------------------------------------------------
 tables () ->
-    io:format("tables~n"),
     webnesia_response:encode(mnesia:system_info(tables)).
 
 %--------------------------------------------------------------------
@@ -58,9 +56,8 @@ tables () ->
 %% @end
 %%--------------------------------------------------------------------
 create_table (Table, Data) ->
-    <<_:8,Bert/binary>> = Data,
-    io:format("CREATE: ~p~n", [bert:decode(Bert)]),
-    Attributes = [list_to_atom(Attribute) || Attribute <- bert:decode(Bert)],
+    io:format("~p~n", [Data]),
+    Attributes = [list_to_atom(Attribute) || Attribute <- decode(Data)],
     case mnesia:create_table(list_to_atom(Table), [{attributes, Attributes}]) of
         {atomic, ok} ->
             webnesia_response:encode(ok);
@@ -137,9 +134,10 @@ list (Table) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-save (Table, JSONData) ->
-    try mochijson2:decode(JSONData) of
-        {struct, Data} ->
+save (Table, Bert) ->
+%%    <<_:8,Bert2/binary>> = Bert,
+    try decode(Bert) of
+        Data ->
             Record = list_to_tuple([list_to_atom(Table)] ++ [ Value || {_, Value} <- Data ]),
             webnesia_response:encode(tuple_to_list(mnesia:transaction(fun() -> mnesia:write(list_to_atom(Table), Record, write) end)))
     catch
@@ -165,6 +163,16 @@ read (Table, Key) ->
 delete (Table, Key) ->
     {atomic, Response} = mnesia:transaction(fun() -> mnesia:delete({list_to_atom(Table), mochijson2:decode(Key)}) end),
     webnesia_response:encode(Response).
+
+%--------------------------------------------------------------------
+%% @doc
+%%
+%% @end
+%%--------------------------------------------------------------------
+decode(Data) ->
+    <<_:8,Bert/binary>> = Data,
+    bert:decode(Bert).
+
 
 %%
 %% Tests

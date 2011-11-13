@@ -25,16 +25,10 @@
       $(document).ready(function() {
       $.ajax({ url: '/_all_tables',
                type: "GET",
-      dataType: 'binary',
+               dataType: 'binary',
                async: false,
-
                success: function(bert) {
-                        var view = new jDataView(bert);
-                        console.log(view);
-                        console.log(view.getUint8(0, true));
-                        console.log(view.getString(view.length, 0).charCodeAt(0));
-                        var data = Bert.decode(bert.toString());
-
+                        var data = decode_bert(bert);
                         $('#tables_tmpl').tmpl(data).appendTo('#table_body');
                }});
             $("#create_test_table").click(function () { create_test_table(); });
