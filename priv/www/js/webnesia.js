@@ -26,7 +26,8 @@ function render_table(limit, offset)
   show_activity();
   var table = window.location.href.slice(window.location.href.indexOf("?") + 1);
   $.get("/" + table, function(bert) {
-    tableInfo = decode_bert_dict(bert);
+    var tableInfo = decode_bert_dict(bert);
+
     $("#table_caption").html($("#table_caption_tmpl").tmpl(tableInfo.table_name));
     $("#table_header").html($("#table_header_tmpl").tmpl(tableInfo.attributes));
     $.get("/" + table + "/_all_records?limit=" + limit + "&skip=" + offset, 
@@ -34,20 +35,27 @@ function render_table(limit, offset)
             data = decode_bert_dict(bert2);
             data.number_of_attributes = tableInfo.number_of_attributes;
             var new_rows = data.rows.map(function(x) {
-              var r = {}; x[0][2].forEach(function(h) { r[h[0][0]] = h[0][1].toString() });
-              return r;//decode_bert_dict(x)
+              var r = {}; 
+              x[0][2].forEach(function(h) { 
+                r[h[0][0]] = h[0][1].toString();
+              });
+              
+              return r;
             });
 
             data.rows = new_rows
-            console.log(data);
-            
+            var keys = tableInfo['attributes'].reduce(function(acum, x) { 
+              acum.push(x.value);
+              return acum;
+            }, []);
+
             $("#table_footer").html($("#table_footer_tmpl").tmpl(data));
             data = data.rows;
             for (key in data) {
-              data[key].keys = tableInfo.attributes;
+              data[key].keys = keys;
               data[key].table = table;
             }
-            console.log(data);            
+
             $("#table_body").html($("#table_body_tmpl").tmpl(data));
             activity = false;
             hide_activity();},
@@ -58,19 +66,25 @@ function render_table(limit, offset)
 
 function render_record()
 {
-    activity = true;
-    show_activity();
-    var table_record = window.location.href.slice(window.location.href.indexOf("?") + 1).split(/\//);
-    var table = table_record[0];
-    var record = table_record[1];
-    $.get("/" + table, function(tableInfo) {
-        $("#table_caption").html($("#table_caption_tmpl").tmpl({"table": tableInfo.table_name, "record": record}));
-        $.get("/" + table + "/" + record, function(data) {
-            $("#table_body").html($("#table_body_tmpl").tmpl(data.rows[0]));
-            activity = false;
-            hide_activity();
-        });
-    });
+  activity = true;
+  show_activity();
+  var table_record = window.location.href.slice(window.location.href.indexOf("?") + 1).split(/\//);
+  var table = table_record[0];
+  var record = table_record[1];
+  console.log(table);
+  $.get("/" + table, function(bert) {
+    var tableInfo = decode_bert_dict(bert);
+    console.log(tableInfo);
+
+    $("#table_caption").html($("#table_caption_tmpl").tmpl({"table": tableInfo.table_name, "record": record}));
+    $.get("/" + table + "/" + record, function(bert2) {
+      $("#table_body").html($("#table_body_tmpl").tmpl(data.rows[0]));
+      activity = false;
+      hide_activity();
+    }, 
+          'binary');
+  }, 
+        'binary');
 }
 
 function create_test_table () {
@@ -80,7 +94,7 @@ function create_test_table () {
             data: Bert.encode(["id", "timestamp", "test_field"]), success: function (data) {
       data = decode_bert(data);
       if (data == "ok") {
-        for (var i = 1; i <= 2 ; i++) {
+        for (var i = 1; i <= 50 ; i++) {
           $.ajax({url: "/test", 
                   type: "POST", 
                   dataType: 'binary',
